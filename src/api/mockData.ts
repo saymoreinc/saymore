@@ -127,7 +127,29 @@ export const mockOrganizations = [
   { id: "org-3", name: "Business B", users: 3, assistants: 1, status: "inactive" as const },
 ];
 
-
+export const mockApiKeys = [
+  {
+    id: "key-1",
+    name: "Production API Key",
+    key: "",
+    createdAt: "2024-01-15T10:00:00Z",
+    lastUsed: "2024-03-20T14:30:00Z",
+  },
+  {
+    id: "key-2",
+    name: "Development API Key",
+    key: "",
+    createdAt: "2024-02-01T09:00:00Z",
+    lastUsed: "2024-03-19T16:45:00Z",
+  },
+  {
+    id: "key-3",
+    name: "Backup API Key",
+    key: "",
+    createdAt: "2024-02-15T11:00:00Z",
+    lastUsed: null,
+  },
+];
 
 export const mockChartData = Array.from({ length: 30 }, (_, i) => ({
   date: new Date(Date.now() - (29 - i) * 86400000).toLocaleDateString("en-US", {
