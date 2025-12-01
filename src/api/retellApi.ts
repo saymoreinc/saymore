@@ -45,12 +45,74 @@ export interface RetellCall {
 
 export interface RetellAgent {
   agent_id: string;
-  agent_name: string;
-  llm_websocket_url?: string;
+  version?: number;
+  is_published?: boolean;
+  response_engine?: {
+    type: string;
+    llm_id?: string;
+    version?: number;
+  };
+  agent_name: string | null;
   voice_id?: string;
-  language?: string;
+  voice_model?: "eleven_turbo_v2" | "eleven_flash_v2" | "eleven_turbo_v2_5" | "eleven_flash_v2_5" | "eleven_multilingual_v2" | "tts-1" | "gpt-4o-mini-tts" | null;
+  fallback_voice_ids?: string[] | null;
+  voice_temperature?: number;
+  voice_speed?: number;
+  volume?: number;
   responsiveness?: number;
   interruption_sensitivity?: number;
+  enable_backchannel?: boolean;
+  backchannel_frequency?: number;
+  backchannel_words?: string[] | null;
+  reminder_trigger_ms?: number;
+  reminder_max_count?: number;
+  ambient_sound?: "coffee-shop" | "convention-hall" | "summer-outdoor" | "mountain-outdoor" | "static-noise" | "call-center" | null;
+  ambient_sound_volume?: number;
+  language?: string;
+  webhook_url?: string | null;
+  webhook_timeout_ms?: number;
+  boosted_keywords?: string[] | null;
+  data_storage_setting?: "everything" | "everything_except_pii" | "basic_attributes_only";
+  opt_in_signed_url?: boolean;
+  pronunciation_dictionary?: Array<{
+    word: string;
+    alphabet: string;
+    phoneme: string;
+  }> | null;
+  normalize_for_speech?: boolean;
+  end_call_after_silence_ms?: number;
+  max_call_duration_ms?: number;
+  voicemail_option?: {
+    action: {
+      type: string;
+      text?: string;
+    };
+  } | null;
+  post_call_analysis_data?: Array<{
+    type: string;
+    name: string;
+    description: string;
+    examples?: string[];
+  }> | null;
+  post_call_analysis_model?: string;
+  begin_message_delay_ms?: number;
+  ring_duration_ms?: number;
+  stt_mode?: "fast" | "accurate";
+  vocab_specialization?: "general" | "medical";
+  allow_user_dtmf?: boolean;
+  user_dtmf_options?: {
+    digit_limit?: number;
+    termination_key?: string;
+    timeout_ms?: number;
+  } | null;
+  denoising_mode?: "noise-cancellation" | "noise-and-background-speech-cancellation";
+  pii_config?: {
+    mode?: string;
+    categories?: string[];
+  };
+  last_modification_timestamp?: number;
+  // Legacy fields for backward compatibility
+  llm_websocket_url?: string;
   enable_transcription?: boolean;
   enable_recording?: boolean;
   metadata?: Record<string, any>;
@@ -63,6 +125,22 @@ export interface RetellPhoneNumber {
   phone_number: string;
   ncco?: any;
   inbound_agent_id?: string;
+  created_at?: number;
+  updated_at?: number;
+}
+
+export interface RetellKnowledgeBase {
+  knowledge_base_id: string;
+  knowledge_base_name?: string;
+  knowledge_base_sources?: Array<{
+    source_id: string;
+    type: string;
+    filename?: string;
+    file_url?: string;
+    file_size?: number;
+    url?: string;
+    created_at?: number;
+  }>;
   created_at?: number;
   updated_at?: number;
 }
@@ -191,9 +269,7 @@ export const getAllAgents = async (): Promise<RetellAgent[]> => {
  * Get a specific agent by ID
  */
 export const getAgentById = async (agentId: string): Promise<RetellAgent> => {
-  const response = await retell.get("/get-agent", {
-    params: { agent_id: agentId },
-  });
+  const response = await retell.get(`/get-agent/${agentId}`);
   return response.data;
 };
 
@@ -212,10 +288,7 @@ export const updateAgent = async (
   agentId: string,
   payload: Partial<RetellAgent>
 ): Promise<RetellAgent> => {
-  const response = await retell.patch("/update-agent", {
-    agent_id: agentId,
-    ...payload,
-  });
+  const response = await retell.patch(`/update-agent/${agentId}`, payload);
   return response.data;
 };
 
@@ -247,6 +320,18 @@ export const getPhoneNumberById = async (phoneNumberId: string): Promise<RetellP
   const response = await retell.get("/get-phone-number", {
     params: { phone_number_id: phoneNumberId },
   });
+  return response.data;
+};
+
+// ============================
+// KNOWLEDGE BASE API
+// ============================
+
+/**
+ * Get a specific knowledge base by ID
+ */
+export const getKnowledgeBase = async (knowledgeBaseId: string): Promise<RetellKnowledgeBase> => {
+  const response = await retell.get(`/get-knowledge-base/${knowledgeBaseId}`);
   return response.data;
 };
 
@@ -300,6 +385,8 @@ export default {
   // Phone Numbers
   getAllPhoneNumbers,
   getPhoneNumberById,
+  // Knowledge Base
+  getKnowledgeBase,
   // Analytics
   getCallAnalytics,
 };

@@ -8,12 +8,22 @@ const delay = (ms: number = 300) => new Promise(resolve => setTimeout(resolve, m
 export const authApi = {
   login: async (email: string, password: string) => {
     await delay();
-    // Mock validation
-    if (email && password) {
+    // Validate specific credentials
+    const validCredentials = {
+      email: "darko@joinbrands.com",
+      password: "Joinbrands123!",
+    };
+    
+    if (email === validCredentials.email && password === validCredentials.password) {
       const token = "mock_jwt_token_" + Date.now();
+      const user = {
+        ...mockUser,
+        email: email,
+        name: "Darko",
+      };
       localStorage.setItem("authToken", token);
-      localStorage.setItem("user", JSON.stringify(mockUser));
-      return { success: true, user: mockUser, token };
+      localStorage.setItem("user", JSON.stringify(user));
+      return { success: true, user, token };
     }
     throw new Error("Invalid credentials");
   },

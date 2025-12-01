@@ -10,8 +10,8 @@ import { Loader2 } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("admin@saymore.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,7 +50,7 @@ export default function Login() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@saymore.com"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -77,9 +77,6 @@ export default function Login() {
                 "Sign in"
               )}
             </Button>
-            <p className="text-xs text-center text-muted-foreground mt-4">
-              Demo credentials are pre-filled for testing
-            </p>
           </form>
         </CardContent>
       </Card>

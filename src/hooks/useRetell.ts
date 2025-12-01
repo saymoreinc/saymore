@@ -194,6 +194,23 @@ export const useRetellPhoneNumber = (phoneNumberId: string) => {
 };
 
 // ============================
+// KNOWLEDGE BASE HOOKS
+// ============================
+
+/**
+ * Hook to fetch a specific knowledge base by ID
+ */
+export const useRetellKnowledgeBase = (knowledgeBaseId: string) => {
+  return useQuery({
+    queryKey: ["retell-knowledge-base", knowledgeBaseId],
+    queryFn: () => retellApi.getKnowledgeBase(knowledgeBaseId),
+    enabled: !!knowledgeBaseId,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+};
+
+// ============================
 // ANALYTICS HOOKS
 // ============================
 

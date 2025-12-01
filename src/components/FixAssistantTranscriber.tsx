@@ -11,11 +11,16 @@ export function FixAssistantTranscriber() {
   const [fixing, setFixing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
+  // Filter to show only joinbrand agents
+  const filteredAssistants = assistants?.filter((assistant: any) =>
+    assistant.agent_name?.toLowerCase().includes("joinbrand")
+  ) || [];
+
   const fixTranscriber = async () => {
-    if (!assistants || assistants.length === 0) {
+    if (!filteredAssistants || filteredAssistants.length === 0) {
       toast({
         title: "No Assistants Found",
-        description: "Please create an assistant first",
+        description: "Please create a joinbrand assistant first",
         variant: "destructive",
       });
       return;
@@ -25,8 +30,8 @@ export function FixAssistantTranscriber() {
     setResult(null);
 
     try {
-      // Update the first assistant
-      const assistant = assistants[0];
+      // Update the first joinbrand assistant
+      const assistant = filteredAssistants[0];
       
       await retellApi.updateAgent(assistant.agent_id, {
         enable_transcription: true,
@@ -86,7 +91,7 @@ export function FixAssistantTranscriber() {
 
         <Button 
           onClick={fixTranscriber} 
-          disabled={fixing || !assistants || assistants.length === 0}
+          disabled={fixing || !filteredAssistants || filteredAssistants.length === 0}
           className="w-full"
         >
           {fixing ? (

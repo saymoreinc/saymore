@@ -67,6 +67,7 @@ export default function Customers() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {customers
             .filter(customer => customer.totalCalls > 0) // Only show phone numbers that have calls
+            .filter(customer => !customer.phoneNumber?.includes("447349397671")) // Exclude specific phone number
             .map((customer) => (
             <Card
               key={customer.id}

@@ -33,6 +33,16 @@ export function StartCallDialog() {
   const { data: phoneNumbers, isLoading: loadingPhoneNumbers } = useRetellPhoneNumbers();
   const startCall = useStartRetellCall();
 
+  // Filter to show only joinbrand agents
+  const filteredAssistants = assistants?.filter((assistant: any) =>
+    assistant.agent_name?.toLowerCase().includes("joinbrand")
+  ) || [];
+
+  // Filter out the specific phone number
+  const filteredPhoneNumbers = phoneNumbers?.filter((phone: any) =>
+    !phone.phone_number?.includes("447349397671")
+  ) || [];
+
   const handleStartCall = async () => {
     if (!phoneNumber || !selectedAssistant || !selectedPhoneNumberId) {
       toast({
@@ -45,7 +55,7 @@ export function StartCallDialog() {
 
     try {
       // Get the phone number to use as from_number
-      const phoneNumberData = phoneNumbers?.find(p => p.phone_number_id === selectedPhoneNumberId);
+      const phoneNumberData = filteredPhoneNumbers?.find(p => p.phone_number_id === selectedPhoneNumberId);
       if (!phoneNumberData) {
         throw new Error("Selected phone number not found");
       }
@@ -109,8 +119,8 @@ export function StartCallDialog() {
                   <SelectItem value="loading" disabled>
                     Loading phone numbers...
                   </SelectItem>
-                ) : phoneNumbers && phoneNumbers.length > 0 ? (
-                  phoneNumbers.map((phone) => (
+                ) : filteredPhoneNumbers && filteredPhoneNumbers.length > 0 ? (
+                  filteredPhoneNumbers.map((phone) => (
                     <SelectItem key={phone.phone_number_id} value={phone.phone_number_id}>
                       {phone.phone_number}
                     </SelectItem>
@@ -137,8 +147,8 @@ export function StartCallDialog() {
                   <SelectItem value="loading" disabled>
                     Loading assistants...
                   </SelectItem>
-                ) : assistants && assistants.length > 0 ? (
-                  assistants.map((assistant) => (
+                ) : filteredAssistants && filteredAssistants.length > 0 ? (
+                  filteredAssistants.map((assistant) => (
                     <SelectItem key={assistant.agent_id} value={assistant.agent_id}>
                       {assistant.agent_name}
                     </SelectItem>

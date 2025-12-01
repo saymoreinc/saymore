@@ -10,16 +10,21 @@ export default function Assistants() {
 
   // Deduplicate agents by agent_id (in case API returns multiple versions)
   // Keep only unique agents based on agent_id
+  // Filter to show only joinbrand agents
   const uniqueAssistants = assistants
-    ? assistants.filter((assistant: any, index: number, self: any[]) =>
-        index === self.findIndex((a: any) => a.agent_id === assistant.agent_id)
-      )
+    ? assistants
+        .filter((assistant: any, index: number, self: any[]) =>
+          index === self.findIndex((a: any) => a.agent_id === assistant.agent_id)
+        )
+        .filter((assistant: any) =>
+          assistant.agent_name?.toLowerCase().includes("joinbrand")
+        )
     : [];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">AI Assistants</h1>
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">AI Assistants</h1>
         <p className="text-muted-foreground mt-1">View your Retell AI voice agents</p>
       </div>
 
@@ -29,61 +34,61 @@ export default function Assistants() {
           <span className="ml-2 text-muted-foreground">Loading agents...</span>
         </div>
       ) : uniqueAssistants && uniqueAssistants.length > 0 ? (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {uniqueAssistants.map((assistant: any) => (
-            <Card key={assistant.agent_id} className="shadow-md hover:shadow-lg transition-all group">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                    <CardTitle className="text-xl">{assistant.agent_name}</CardTitle>
-                    <Badge variant="outline" className="bg-success/10 text-success border-success/20 mt-2">
-                      Active
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="space-y-2 text-sm">
-                  {assistant.voice_id && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Voice:</span>
-                      <span className="font-medium">{assistant.voice_id}</span>
-                  </div>
-                  )}
-                  {assistant.language && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Language:</span>
-                      <span className="font-medium">{assistant.language}</span>
-                </div>
-                  )}
-                  {assistant.enable_transcription !== undefined && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Transcription:</span>
-                      <Badge variant={assistant.enable_transcription ? "default" : "secondary"}>
-                        {assistant.enable_transcription ? "Enabled" : "Disabled"}
+            <Link key={assistant.agent_id} to={`/assistants/${assistant.agent_id}`}>
+              <Card className="shadow-md hover:shadow-lg transition-all group cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-xl">{assistant.agent_name}</CardTitle>
+                      <Badge variant="outline" className="bg-success/10 text-success border-success/20 mt-2">
+                        Active
                       </Badge>
+                    </div>
                   </div>
-                  )}
-                  {assistant.enable_recording !== undefined && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Recording:</span>
-                      <Badge variant={assistant.enable_recording ? "default" : "secondary"}>
-                        {assistant.enable_recording ? "Enabled" : "Disabled"}
-                      </Badge>
-                </div>
-                  )}
-              </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2 text-sm">
+                    {assistant.voice_id && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Voice:</span>
+                        <span className="font-medium">{assistant.voice_id}</span>
+                      </div>
+                    )}
+                    {assistant.language && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Language:</span>
+                        <span className="font-medium">{assistant.language}</span>
+                      </div>
+                    )}
+                    {assistant.enable_transcription !== undefined && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Transcription:</span>
+                        <Badge variant={assistant.enable_transcription ? "default" : "secondary"}>
+                          {assistant.enable_transcription ? "Enabled" : "Disabled"}
+                        </Badge>
+                      </div>
+                    )}
+                    {assistant.enable_recording !== undefined && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Recording:</span>
+                        <Badge variant={assistant.enable_recording ? "default" : "secondary"}>
+                          {assistant.enable_recording ? "Enabled" : "Disabled"}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
 
-                <Link to={`/assistants/${assistant.agent_id}`}>
-                <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                  View Details
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                  <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                    View Details
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
       ) : (
         <Card>
           <CardContent className="py-12 text-center">
