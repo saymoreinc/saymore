@@ -186,6 +186,7 @@ export const callsApi = {
         status: call.call_status === "ended" ? "completed" : call.call_status === "ongoing" ? "active" : "failed",
         timestamp: call.start_timestamp ? new Date(call.start_timestamp).toISOString() : new Date().toISOString(),
         transcript: call.transcript || "No transcript available",
+        recordingUrl: call.recording_url || call.recording_multi_channel_url || call.scrubbed_recording_url || call.scrubbed_recording_multi_channel_url || null,
         converted: call.metadata?.converted || false,
       };
     } catch (error) {
@@ -215,6 +216,7 @@ export const callsApi = {
           status: call.call_status === "ended" ? "completed" : call.call_status === "ongoing" ? "active" : "failed",
           timestamp: call.start_timestamp ? new Date(call.start_timestamp).toISOString() : new Date().toISOString(),
           transcript: call.transcript || "No transcript available",
+          recordingUrl: call.recording_url || call.recording_multi_channel_url || call.scrubbed_recording_url || call.scrubbed_recording_multi_channel_url || null,
           converted: call.metadata?.converted || false,
         }));
     } catch (error) {

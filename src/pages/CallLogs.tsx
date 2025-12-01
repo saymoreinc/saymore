@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Search, Calendar, Filter, Sparkles, Loader2, Save } from "lucide-react";
+import { Search, Calendar, Filter, Sparkles, Loader2, Save, Volume2 } from "lucide-react";
 import { formatDistance } from "date-fns";
 import { processAndSaveCall } from "@/services/customerService";
 import { analyzeTranscriptWithAI, ExtractedCallData } from "@/services/openai";
@@ -50,7 +50,14 @@ export default function CallLogs() {
   };
 
   const handleRowClick = async (call: any) => {
-    setSelectedCall(call);
+    // Fetch full call details to ensure we have the recording URL
+    try {
+      const fullCall = await callsApi.getCallById(call.id);
+      setSelectedCall(fullCall);
+    } catch (error) {
+      // If fetching fails, use the call data we already have
+      setSelectedCall(call);
+    }
     setDrawerOpen(true);
   };
 
@@ -290,6 +297,43 @@ export default function CallLogs() {
                     <p className="font-medium">{selectedCall.converted ? "Yes" : "No"}</p>
                   </div>
                 </div>
+
+                {/* Recording */}
+                {selectedCall.recordingUrl && (
+                  <Card className="border-primary/20 bg-primary/5">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Volume2 className="h-5 w-5 text-primary" />
+                        Call Recording
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <audio
+                          controls
+                          className="w-full h-12"
+                          src={selectedCall.recordingUrl}
+                          preload="metadata"
+                        >
+                          Your browser does not support the audio element.
+                        </audio>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>Duration: {selectedCall.duration}s</span>
+                          {selectedCall.recordingUrl && (
+                            <a
+                              href={selectedCall.recordingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:underline flex items-center gap-1"
+                            >
+                              <span>Download</span>
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
