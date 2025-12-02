@@ -214,7 +214,7 @@ export const callsApi = {
       // Filter to only search calls from specific agent
       const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
       const calls = await retellApi.getAllCalls({ agent_id: TARGET_AGENT_ID });
-      const lowerQuery = query.toLowerCase();
+    const lowerQuery = query.toLowerCase();
       return calls
         .filter(call => 
           (call.to_number?.toLowerCase().includes(lowerQuery) ||

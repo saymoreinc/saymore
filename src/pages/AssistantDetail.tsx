@@ -100,7 +100,7 @@ export default function AssistantDetail() {
       // Convert empty webhook_url to null (API expects null, not empty string)
       if (payload.webhook_url === "") {
         payload.webhook_url = null;
-      }
+    }
       
       // Remove empty string values for optional fields
       Object.keys(payload).forEach((key) => {

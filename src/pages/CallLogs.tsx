@@ -66,7 +66,7 @@ export default function CallLogs() {
       setSelectedCall(fullCall);
     } catch (error) {
       // If fetching fails, use the call data we already have
-      setSelectedCall(call);
+    setSelectedCall(call);
     }
     setDrawerOpen(true);
   };

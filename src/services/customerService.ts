@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { analyzeTranscriptWithAI, generateCustomerContext, ExtractedCallData, ScheduledEvent, analyzeAllTranscriptsForQuestions, QuestionStats } from '@/services/openai';
+import retellApi from '@/api/retellApi';
 
 export interface Customer {
   id: string;
@@ -708,31 +709,37 @@ export async function getAllCallRecords(limitCount = 1000): Promise<CallRecord[]
  */
 export async function getQuestionStatistics(questionsList: string[]): Promise<QuestionStats[]> {
   try {
-    console.log('📊 Fetching all call records with transcripts...');
-    const allCalls = await getAllCallRecords(1000);
+    // Always filter by specific agent ID before calling Gemini
+    const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
+    
+    console.log(`📊 Fetching call records with transcripts for agent ${TARGET_AGENT_ID}...`);
+    
+    // Fetch calls from Retell API filtered by agent ID
+    const allCalls = await retellApi.getAllCalls({ agent_id: TARGET_AGENT_ID });
+    
+    // Additional client-side filter to ensure only target agent calls are included
+    const filteredCalls = allCalls.filter(call => call.agent_id === TARGET_AGENT_ID);
     
     // Filter calls with transcripts
-    const callsWithTranscripts = allCalls.filter(
+    const callsWithTranscripts = filteredCalls.filter(
       call => call.transcript && call.transcript.trim().length > 0
     );
     
-    console.log(`📝 Found ${callsWithTranscripts.length} calls with transcripts`);
+    console.log(`📝 Found ${callsWithTranscripts.length} calls with transcripts for agent ${TARGET_AGENT_ID}`);
     
     if (callsWithTranscripts.length === 0) {
-      return questionsList.map(question => ({
-        question,
-        count: 0,
-        percentage: 0,
-      }));
+      // Return empty array when no calls are available
+      // Questions will only be shown if they appear in actual call logs
+      return [];
     }
     
     // Prepare transcripts for analysis
     const transcripts = callsWithTranscripts.map(call => ({
-      id: call.id,
+      id: call.call_id,
       transcript: call.transcript,
     }));
     
-    console.log('🤖 Analyzing all transcripts in a single OpenAI API call...');
+    console.log(`🤖 Analyzing ${transcripts.length} transcripts in a single Gemini API call for agent ${TARGET_AGENT_ID}...`);
     const stats = await analyzeAllTranscriptsForQuestions(transcripts, questionsList);
     
     console.log('✅ Question statistics generated');

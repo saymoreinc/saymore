@@ -101,11 +101,23 @@ export default function Dashboard() {
     try {
       console.log('🚀 Starting question statistics analysis (single API call)...');
       const stats = await getQuestionStatistics(QUESTIONS_LIST);
-      setQuestionStats(stats);
-      toast({
-        title: "✅ Statistics Loaded",
-        description: `Analyzed ${stats.reduce((sum, s) => sum + s.count, 0)} question mentions across all calls.`,
-      });
+      
+      // Only set stats if there are actual questions found in call logs
+      if (stats.length > 0 && stats.some(s => s.count > 0)) {
+        setQuestionStats(stats.filter(s => s.count > 0)); // Only show questions that were actually asked
+        const totalMentions = stats.reduce((sum, s) => sum + s.count, 0);
+        toast({
+          title: "✅ Statistics Loaded",
+          description: `Found ${stats.filter(s => s.count > 0).length} questions asked ${totalMentions} time(s) across all calls.`,
+        });
+      } else {
+        setQuestionStats([]);
+        toast({
+          title: "ℹ️ No Questions Found",
+          description: "No call logs with transcripts available. Questions will appear once calls are processed.",
+          variant: "default",
+        });
+      }
     } catch (error: any) {
       console.error('Error loading question statistics:', error);
       toast({
@@ -256,100 +268,99 @@ export default function Dashboard() {
               <p>Click "Analyze Questions" to see which questions are asked most frequently.</p>
               <p className="text-sm mt-2">This will analyze all call transcripts using AI.</p>
             </div>
-          ) : (
+          ) : questionStats.length > 0 ? (
             <div className="space-y-6">
-              {questionStats.filter(s => s.count > 0).length > 0 ? (
-                <>
-                  {/* Top Questions Chart */}
-                  <div className="h-96">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={questionStats.filter(s => s.count > 0).slice(0, 10).map(s => ({
-                          ...s,
-                          questionShort: s.question.length > 60 ? s.question.substring(0, 60) + '...' : s.question,
-                        }))}
-                        layout="vertical"
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                        <YAxis
-                          type="category"
-                          dataKey="questionShort"
-                          stroke="hsl(var(--muted-foreground))"
-                          fontSize={11}
-                          width={350}
-                          tick={{ fill: "hsl(var(--muted-foreground))" }}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: "hsl(var(--card))",
-                            border: "1px solid hsl(var(--border))",
-                            borderRadius: "8px",
-                          }}
-                          formatter={(value: any) => [`${value} times`, "Count"]}
-                          labelFormatter={(label: any) => {
-                            const stat = questionStats.find(s => s.question.startsWith(label) || label.startsWith(s.question.substring(0, 60)));
-                            return stat ? stat.question : label;
-                          }}
-                        />
-                        <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+              {/* Top Questions Chart - Only show questions with count > 0 */}
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={questionStats
+                      .sort((a, b) => b.count - a.count)
+                      .slice(0, 10)
+                      .map(s => ({
+                        ...s,
+                        questionShort: s.question.length > 60 ? s.question.substring(0, 60) + '...' : s.question,
+                      }))}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis
+                      type="category"
+                      dataKey="questionShort"
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={11}
+                      width={350}
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                      formatter={(value: any) => [`${value} times`, "Count"]}
+                      labelFormatter={(label: any) => {
+                        const stat = questionStats.find(s => s.question.startsWith(label) || label.startsWith(s.question.substring(0, 60)));
+                        return stat ? stat.question : label;
+                      }}
+                    />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
 
-                  {/* Questions Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Rank</th>
-                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Question</th>
-                          <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Count</th>
-                          <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Percentage</th>
+              {/* Questions Table - Only show questions found in call logs */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Rank</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Question</th>
+                      <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Count</th>
+                      <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Percentage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {questionStats
+                      .sort((a, b) => b.count - a.count) // Sort by count descending
+                      .map((stat, index) => (
+                        <tr
+                          key={stat.question}
+                          className="border-b border-border hover:bg-muted/50 transition-colors"
+                        >
+                          <td className="py-3 px-4 text-sm font-medium">
+                            <Badge variant="outline" className="w-8 h-8 flex items-center justify-center">
+                              {index + 1}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4 text-sm">{stat.question}</td>
+                          <td className="py-3 px-4 text-sm text-right font-medium">
+                            {stat.count}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-right text-muted-foreground">
+                            {stat.percentage.toFixed(1)}%
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {questionStats
-                          .filter(s => s.count > 0)
-                          .slice(0, 20)
-                          .map((stat, index) => (
-                            <tr
-                              key={stat.question}
-                              className="border-b border-border hover:bg-muted/50 transition-colors"
-                            >
-                              <td className="py-3 px-4 text-sm font-medium">
-                                <Badge variant="outline" className="w-8 h-8 flex items-center justify-center">
-                                  {index + 1}
-                                </Badge>
-                              </td>
-                              <td className="py-3 px-4 text-sm">{stat.question}</td>
-                              <td className="py-3 px-4 text-sm text-right font-medium">
-                                {stat.count}
-                              </td>
-                              <td className="py-3 px-4 text-sm text-right text-muted-foreground">
-                                {stat.percentage.toFixed(1)}%
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <HelpCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium mb-2">No questions found in call transcripts</p>
-                  <p className="text-sm">This could mean:</p>
-                  <ul className="text-sm mt-2 space-y-1 list-disc list-inside max-w-md mx-auto">
-                    <li>No calls have been processed yet</li>
-                    <li>Call transcripts don't contain any of the tracked questions</li>
-                    <li>Questions were asked in different wording than expected</li>
-                  </ul>
-                  <p className="text-sm mt-4 text-muted-foreground/80">
-                    Make sure you have calls with transcripts in your database.
-                  </p>
-                </div>
-              )}
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <HelpCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium mb-2">No questions found in call transcripts</p>
+              <p className="text-sm">This could mean:</p>
+              <ul className="text-sm mt-2 space-y-1 list-disc list-inside max-w-md mx-auto">
+                <li>No calls have been processed yet</li>
+                <li>No call logs with transcripts are available</li>
+                <li>Call transcripts don't contain any of the tracked questions</li>
+                <li>Questions were asked in different wording than expected</li>
+              </ul>
+              <p className="text-sm mt-4 text-muted-foreground/80">
+                Questions will only appear here once they are found in actual call logs with transcripts.
+              </p>
             </div>
           )}
         </CardContent>
