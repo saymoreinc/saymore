@@ -48,10 +48,14 @@ export const authApi = {
 export const dashboardApi = {
   getKPIs: async () => {
     try {
-      const calls = await retellApi.getAllCalls();
-      const completedCalls = calls.filter(call => call.call_status === "ended");
+      // Always filter by specific agent ID
+      const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
+      const calls = await retellApi.getAllCalls({ agent_id: TARGET_AGENT_ID });
+      // Additional client-side filter to ensure only target agent calls are included
+      const filteredCalls = calls.filter(call => call.agent_id === TARGET_AGENT_ID);
+      const completedCalls = filteredCalls.filter(call => call.call_status === "ended");
       
-      const totalCalls = calls.length;
+      const totalCalls = filteredCalls.length;
       const avgDuration = completedCalls.length > 0
         ? Math.round(completedCalls.reduce((sum, call) => sum + (call.duration_ms || 0) / 1000, 0) / completedCalls.length)
         : 0;
@@ -59,7 +63,7 @@ export const dashboardApi = {
       // AI response time not directly available, using estimated value
       const avgResponseTime = 1.2;
       
-      const convertedCalls = calls.filter(call => call.metadata?.converted === true).length;
+      const convertedCalls = filteredCalls.filter(call => call.metadata?.converted === true).length;
       const conversionRate = totalCalls > 0
         ? parseFloat(((convertedCalls / totalCalls) * 100).toFixed(1))
         : 0;
@@ -83,7 +87,11 @@ export const dashboardApi = {
 
   getChartData: async () => {
     try {
-      const calls = await retellApi.getAllCalls();
+      // Always filter by specific agent ID
+      const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
+      const calls = await retellApi.getAllCalls({ agent_id: TARGET_AGENT_ID });
+      // Additional client-side filter to ensure only target agent calls are included
+      const filteredCalls = calls.filter(call => call.agent_id === TARGET_AGENT_ID);
       
       // Group calls by date for the last 30 days
       const last30Days = Array.from({ length: 30 }, (_, i) => {
@@ -93,7 +101,7 @@ export const dashboardApi = {
       });
       
       const chartData = last30Days.map(date => {
-        const dateCalls = calls.filter(call => 
+        const dateCalls = filteredCalls.filter(call => 
           call.start_timestamp && new Date(call.start_timestamp).toISOString().startsWith(date)
         );
         const conversions = dateCalls.filter(call => call.metadata?.converted === true).length;
@@ -114,8 +122,12 @@ export const dashboardApi = {
 
   getLiveCalls: async () => {
     try {
-      const calls = await retellApi.getAllCalls({ limit: 5 });
-      return calls.slice(0, 5).map(call => ({
+      // Always filter by specific agent ID
+      const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
+      const calls = await retellApi.getAllCalls({ agent_id: TARGET_AGENT_ID, limit: 5 });
+      // Additional client-side filter to ensure only target agent calls are included
+      const filteredCalls = calls.filter(call => call.agent_id === TARGET_AGENT_ID);
+      return filteredCalls.slice(0, 5).map(call => ({
         id: call.call_id,
         assistantId: call.agent_id || "",
         assistantName: call.agent_name || (call.agent_id ? `Assistant ${call.agent_id.slice(-4)}` : "Assistant"),
@@ -137,8 +149,10 @@ export const dashboardApi = {
 export const callsApi = {
   getAllCalls: async (filters?: { startDate?: string; endDate?: string; assistant?: string; status?: string }) => {
     try {
+      // Always filter by specific agent ID
+      const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
       const calls = await retellApi.getAllCalls({
-        agent_id: filters?.assistant !== "all" ? filters?.assistant : undefined,
+        agent_id: TARGET_AGENT_ID,
       });
       
       // Filter by status if needed
@@ -197,14 +211,17 @@ export const callsApi = {
 
   searchCalls: async (query: string) => {
     try {
-      const calls = await retellApi.getAllCalls();
-    const lowerQuery = query.toLowerCase();
+      // Filter to only search calls from specific agent
+      const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
+      const calls = await retellApi.getAllCalls({ agent_id: TARGET_AGENT_ID });
+      const lowerQuery = query.toLowerCase();
       return calls
         .filter(call => 
-          call.to_number?.toLowerCase().includes(lowerQuery) ||
+          (call.to_number?.toLowerCase().includes(lowerQuery) ||
           call.from_number?.toLowerCase().includes(lowerQuery) ||
           call.transcript?.toLowerCase().includes(lowerQuery) ||
-          call.call_id.toLowerCase().includes(lowerQuery)
+          call.call_id.toLowerCase().includes(lowerQuery)) &&
+          call.agent_id === TARGET_AGENT_ID
         )
         .map(call => ({
           id: call.call_id,
@@ -247,8 +264,12 @@ export const callsApi = {
 
   getActiveCalls: async () => {
     try {
+      // Always filter by specific agent ID
+      const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
       const calls = await retellApi.getActiveCalls();
-      return calls.map(call => ({
+      return calls
+        .filter(call => call.agent_id === TARGET_AGENT_ID)
+        .map(call => ({
         id: call.call_id,
         assistantId: call.agent_id || "",
         assistantName: call.agent_name || (call.agent_id ? `Assistant ${call.agent_id.slice(-4)}` : "Assistant"),
@@ -258,6 +279,7 @@ export const callsApi = {
         status: "active",
         timestamp: call.start_timestamp ? new Date(call.start_timestamp).toISOString() : new Date().toISOString(),
         transcript: call.transcript || "",
+        recordingUrl: call.recording_url || call.recording_multi_channel_url || call.scrubbed_recording_url || call.scrubbed_recording_multi_channel_url || null,
         converted: call.metadata?.converted || false,
       }));
     } catch (error) {

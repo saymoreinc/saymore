@@ -15,10 +15,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 
 export default function CallLogs() {
   const { toast } = useToast();
+  // Filter to only show calls from specific agent
+  const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
+  
   const [calls, setCalls] = useState([]);
   const [assistants, setAssistants] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedAssistant, setSelectedAssistant] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedCall, setSelectedCall] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -29,21 +31,29 @@ export default function CallLogs() {
 
   useEffect(() => {
     loadData();
-  }, [selectedAssistant, selectedStatus]);
+  }, [selectedStatus]);
 
   const loadData = async () => {
     const [callsData, assistantsData] = await Promise.all([
-      callsApi.getAllCalls({ assistant: selectedAssistant, status: selectedStatus }),
+      callsApi.getAllCalls({ assistant: TARGET_AGENT_ID, status: selectedStatus }),
       assistantsApi.getAll(),
     ]);
-    setCalls(callsData);
+    // Additional client-side filter to ensure only target agent calls are shown
+    const filteredCalls = callsData.filter((call: any) => 
+      call.assistantId === TARGET_AGENT_ID
+    );
+    setCalls(filteredCalls);
     setAssistants(assistantsData);
   };
 
   const handleSearch = async () => {
     if (searchQuery.trim()) {
       const results = await callsApi.searchCalls(searchQuery);
-      setCalls(results);
+      // Filter to only show calls from target agent
+      const filteredResults = results.filter((call: any) => 
+        call.assistantId === TARGET_AGENT_ID
+      );
+      setCalls(filteredResults);
     } else {
       loadData();
     }
@@ -175,7 +185,7 @@ export default function CallLogs() {
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               <div className="flex gap-2">
                 <Input
@@ -190,19 +200,6 @@ export default function CallLogs() {
                 </Button>
               </div>
             </div>
-            <Select value={selectedAssistant} onValueChange={setSelectedAssistant}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Assistants" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Assistants</SelectItem>
-                {assistants.map((asst: any) => (
-                  <SelectItem key={asst.id} value={asst.id}>
-                    {asst.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger>
                 <SelectValue placeholder="All Statuses" />

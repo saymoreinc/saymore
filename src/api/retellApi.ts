@@ -194,27 +194,37 @@ export const getAllCalls = async (params?: {
  * Get active calls
  */
 export const getActiveCalls = async (): Promise<RetellCall[]> => {
+  // Always filter by specific agent ID
+  const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
   const response = await retell.post("/v2/list-calls", {
     filter_criteria: {
       call_status: ["ongoing"],
+      agent_id: [TARGET_AGENT_ID],
     },
   });
   // Retell AI returns an array directly, not wrapped in a 'calls' property
-  return Array.isArray(response.data) ? response.data : [];
+  // Additional client-side filter to ensure only target agent calls are included
+  const calls = Array.isArray(response.data) ? response.data : [];
+  return calls.filter(call => call.agent_id === TARGET_AGENT_ID);
 };
 
 /**
  * Get completed calls
  */
 export const getCompletedCalls = async (limit: number = 50): Promise<RetellCall[]> => {
+  // Always filter by specific agent ID
+  const TARGET_AGENT_ID = "agent_8ab2d9490bf43cf83327ce1281";
   const response = await retell.post("/v2/list-calls", {
     filter_criteria: {
       call_status: ["ended"],
+      agent_id: [TARGET_AGENT_ID],
     },
     limit,
   });
   // Retell AI returns an array directly, not wrapped in a 'calls' property
-  return Array.isArray(response.data) ? response.data : [];
+  // Additional client-side filter to ensure only target agent calls are included
+  const calls = Array.isArray(response.data) ? response.data : [];
+  return calls.filter(call => call.agent_id === TARGET_AGENT_ID);
 };
 
 /**
